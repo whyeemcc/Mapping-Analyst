@@ -1,6 +1,7 @@
 # Mapping-Analyst
-A graphic tool for visualizing data from wafers
-![logo](https://github.com/whyeemcc/Mapping-Analyst/blob/master/Figures/logo.png)
+> A graphic tool for visualizing data from wafers
+
+![logo](https://github.com/whyeemcc/Mapping-Analyst/blob/master/images/logo.png)
 
 ## 功能：
 解析晶圆WAT测试的数据文件，提供可视化的报告和部分统计数据结论。
