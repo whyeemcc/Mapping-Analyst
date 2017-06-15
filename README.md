@@ -11,3 +11,9 @@ A graphic tool for visualizing data from wafers
 * 支持搜索或筛选参数条目
 * 支持手动剔除任意die的数据
 * 支持数据文件拖拽载入
+
+## 使用的工具及库：
+* python 3.6
+* PyQt5
+* matplotlib 2.0.2
+* pyinstaller 
