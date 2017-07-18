@@ -5,6 +5,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from Extract import ItemAll,RegularData,Statistic
 from Visualize import DataVisualize,DieVisualize
+from Calculate import Cal
 from Layout import Layout
 from Help import Help
 import images_qr
@@ -28,7 +29,7 @@ class Interface(QtWidgets.QMainWindow):
         # x,y,width,length
         self.setGeometry(100, 100, 1300, 650)
         self.setWindowTitle('Mapping Analyst')
-        self.setWindowIcon(QtGui.QIcon(':/logo/logo.gif')) 
+        self.setWindowIcon(QtGui.QIcon(':/images/logo.gif')) 
         self.show()
 
     def widget(self):       
@@ -36,14 +37,17 @@ class Interface(QtWidgets.QMainWindow):
         self.Id_Select = QtWidgets.QComboBox(self) 
         self.Search_Line = QtWidgets.QLineEdit(self)
         self.Search_Button = QtWidgets.QPushButton("筛选")  
+        self.Sigma_Flag = QtWidgets.QRadioButton("循环筛除距离 Median 值 3σ 以外的 die")
         self.Die_Select = QtWidgets.QComboBox(self)
         self.Delete_Button = QtWidgets.QPushButton("剔除该die")
         self.Reset_Button = QtWidgets.QPushButton("重置")
+        # set Font style
         self.Search_Button.setFont(QtGui.QFont("Microsoft YaHei"))
+        self.Sigma_Flag.setFont(QtGui.QFont("Microsoft YaHei"))
         self.Delete_Button.setFont(QtGui.QFont("Microsoft YaHei"))
         self.Reset_Button.setFont(QtGui.QFont("Microsoft YaHei"))
         self.Item_List.setFont(QtGui.QFont('Microsoft YaHei',9, QtGui.QFont.Bold))
-        
+               
     def draw(self):        
         self.fig1 = plt.figure(facecolor=('none'))
         self.fig2 = plt.figure(facecolor=('none'))
@@ -69,9 +73,9 @@ class Interface(QtWidgets.QMainWindow):
         self.label_Average   = QtWidgets.QLabel("Average:")
         self.label_Max       = QtWidgets.QLabel("Max:")
         self.label_Min       = QtWidgets.QLabel("Min:")
-        self.label_Standard  = QtWidgets.QLabel("Standard(δ):")
-        self.label_3sigma    = QtWidgets.QLabel("3sigma(3δ):")
-        self.label_sigmMed   = QtWidgets.QLabel("δ/median:")
+        self.label_Standard  = QtWidgets.QLabel("Standard(σ):")
+        self.label_3sigma    = QtWidgets.QLabel("3sigma(3σ):")
+        self.label_sigmMed   = QtWidgets.QLabel("σ/median:")
         # calculated value
         self.label_fileNow_C    = QtWidgets.QLabel("")
         self.label_Etest_C      = QtWidgets.QLabel("")
@@ -157,6 +161,9 @@ class Interface(QtWidgets.QMainWindow):
         layout.specFrame.addWidget(self.label_Red)         
         layout.specFrame.addStretch()
 
+        layout.FlagFrame.addWidget(self.Sigma_Flag) 
+        layout.FlagFrame.addStretch()
+        
         layout.DelFrame.addWidget(self.Die_Select)
         layout.DelFrame.addWidget(self.Delete_Button)
         layout.DelFrame.addWidget(self.Reset_Button)
@@ -255,19 +262,22 @@ class Interface(QtWidgets.QMainWindow):
         if fname == '':
             pass
         elif os.path.splitext(fname)[1] != '.dat':
-            QtWidgets.QMessageBox.question(self,'Message','文件后缀名不正确，请载入 .dat 文件。')
+            QtWidgets.QMessageBox.critical(self,'Error','文件后缀名不正确，请载入 .dat 文件。')
         else:
             self.label_fileNow_C.setText(os.path.split(fname)[1])
+            self.Search_Line.setText('')
             try:
                 self.loadFile(fname)
             except:
-                QtWidgets.QMessageBox.critical(self,"Critical","解析文件失败，请检查格式。")
+                QtWidgets.QMessageBox.critical(self,"Error","解析文件失败，请检查数据格式。")
                     
     def loadFile(self,fname):
         self.content = open(fname,'r').readlines()
         itemAll = ItemAll(self.content)
         self.coordinate = itemAll.coordinate
+        self.radius = itemAll.radius()
         self.allList = itemAll.allList
+        self.totalDie = str(len(self.coordinate))
         self.loadID()
                  
     def loadID(self):
@@ -308,45 +318,52 @@ class Interface(QtWidgets.QMainWindow):
             self.line = self.content[dataRow].rstrip('\n')
             # show the original line row index on the statusBar
             self.statusBar().showMessage('原始文件所在行数：'+str(dataRow+1))
-            # extract data informations from the raw file            
+
+            # extract data informations from the raw file
             regularData = RegularData(self.line,self.coordinate)
-            self.radius = regularData.radius
             self.plotDie = regularData.PlotDie
             self.plotData = regularData.PlotData
-            # draw figure and reload the Die_Select QComboBox
+           
             self.fig1.clear()
-            self.showIt(self.plotData,self.plotDie)
-            self.loadDies(self.plotDie)
-            # two new var prepare to record del dies
-            self.pltDatTemp = self.plotData[:]
-            self.pltDieTemp = self.plotDie[:]
-            
+            if self.plotData == []:
+                QtWidgets.QMessageBox.critical(self,'数据为空,可能是以下原因：',
+                "1：该行数据全为空；\n2：踢除错误值(+3.000000E+30)后数据全为空。")
+                self.showIt([],[])
+            else:
+                # check sigma flag status 
+                if self.Sigma_Flag.isChecked():
+                    cal = Cal()
+                    fd = cal.sigmaFilter(self.plotData,self.plotDie)
+                    self.plotData,self.plotDie = fd[0],fd[1]
+                # draw figure and reload the Die_Select QComboBox
+                self.showIt(self.plotData,self.plotDie)
+                self.loadDies(self.plotDie)
+                # two new var for recording delete dies
+                self.pltDatTemp = self.plotData[:]
+                self.pltDieTemp = self.plotDie[:]    
+                
     def showIt(self,PlotData,PlotDie):
-        if PlotData == []:
-            QtWidgets.QMessageBox.critical(self,'数据为空,可能是以下原因：',
-            "1：该行数据全为空；\n2：踢除错误值(+3.000000E+30)后数据全为空。")
-        else:
-            # show the curve and wafer image
-            DataVisualize(self.fig1,PlotData,PlotDie)
-            DieVisualize(self.fig2,PlotData,PlotDie,self.radius)
-            self.canvas1.draw()
-            self.canvas2.draw()     
-            # show the information and statistical results
-            numer = Statistic(self.line,PlotData,PlotDie)
-            self.label_Etest_C.setText(numer.Etest)
-            self.label_Testkey_C.setText(numer.Testkey)
-            self.label_Device_C.setText(numer.Device)
-            self.label_W_C.setText(numer.W)
-            self.label_L_C.setText(numer.L)
-            self.label_Unit_C.setText(numer.Unit)
-            self.label_DieCount_C.setText(numer.DieCount)
-            self.label_Median_C.setText(numer.Median)
-            self.label_Average_C.setText(numer.Average)
-            self.label_Max_C.setText(numer.Max)
-            self.label_Min_C.setText(numer.Min)
-            self.label_Standard_C.setText(numer.Standard)
-            self.label_3sigma_C.setText(numer._3sigma)    
-            self.label_sigmMed_C.setText(numer.sigmMed) 
+        # show the curve and wafer image
+        DataVisualize(self.fig1,PlotData,PlotDie)
+        DieVisualize(self.fig2,PlotData,PlotDie,self.radius)
+        self.canvas1.draw()
+        self.canvas2.draw()     
+        # show the information and statistical results
+        numer = Statistic(self.line,PlotData)
+        self.label_Etest_C.setText(numer.Etest)
+        self.label_Testkey_C.setText(numer.Testkey)
+        self.label_Device_C.setText(numer.Device)
+        self.label_W_C.setText(numer.W)
+        self.label_L_C.setText(numer.L)
+        self.label_Unit_C.setText(numer.Unit)
+        self.label_DieCount_C.setText(numer.DieCount+' (%s)'%self.totalDie)
+        self.label_Median_C.setText(numer.Median)
+        self.label_Average_C.setText(numer.Average)
+        self.label_Max_C.setText(numer.Max)
+        self.label_Min_C.setText(numer.Min)
+        self.label_Standard_C.setText(numer.Standard)
+        self.label_3sigma_C.setText(numer._3sigma)    
+        self.label_sigmMed_C.setText(numer.sigmMed) 
   
     def loadDies(self,dies):
         self.Die_Select.clear()
@@ -372,9 +389,11 @@ class Interface(QtWidgets.QMainWindow):
     
     def stateCheck(self):
         # signals and slots
+        self.Search_Line.returnPressed.connect(self.loadList)
         self.Search_Button.clicked.connect(self.loadList)
         self.Id_Select.currentIndexChanged.connect(self.loadList)
         self.Item_List.currentRowChanged.connect(self.justDoIt)
+        self.Sigma_Flag.clicked.connect(self.justDoIt)
         self.Delete_Button.clicked.connect(self.delDie)
         self.Reset_Button.clicked.connect(self.justDoIt)
                

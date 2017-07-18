@@ -1,6 +1,6 @@
 import sys,os
 import re
-import numpy as np
+from Calculate import Cal
 
 class ItemAll:
     def __init__(self,content):
@@ -36,13 +36,18 @@ class ItemAll:
                 # allList = [('SYS_WAFERID,3',27,['ID1_MA012H_NMOS12_d9_d9', ...]),...]
                 self.allList.append((waferID,waferIDrow,tempList))
             i = i + 1
-
+            
+    def radius(self):
+        # max value of coordinates
+        s = str(self.coordinate).lstrip('[').rstrip(']').replace('(','').replace(')','')
+        maxXY = max([abs(eval(x)) for x in s.split(',') if x.strip()])
+        return maxXY + 1            
+            
             
 class RegularData:
     def __init__(self,line,rawDie):
         self.line = line
         self.rawDie = rawDie
-        self.radius = self.radius()
         self.cut()
   
     def cut(self):
@@ -62,18 +67,11 @@ class RegularData:
                 self.PlotDie.append(self.rawDie[j])
         self.PlotData = [eval(x) for x in self.PlotData]
         
-    def radius(self):
-        # max value of coordinates
-        s = str(self.rawDie).lstrip('[').rstrip(']').replace('(','').replace(')','')
-        maxXY = max([abs(eval(x)) for x in s.split(',') if x.strip()])
-        return maxXY + 1            
-            
-            
+        
 class Statistic:
-    def __init__(self,line,Data,Die):
+    def __init__(self,line,Data):
         self.line = line
         self.Data = Data
-        self.Die = Die
         
         self.itemSplit()
         self.numerical() 
@@ -107,11 +105,32 @@ class Statistic:
         self.Unit = self.line.split(',')[3]
         
     def numerical(self):
-        self.DieCount   = str(len(self.Die))
-        self.Median     = str(np.median(self.Data))
-        self.Average    = str(np.mean(self.Data))
-        self.Max        = str(np.max(self.Data))
-        self.Min        = str(np.min(self.Data))
-        self.Standard   = str(np.std(self.Data))
-        self._3sigma    = str(3*np.std(self.Data))
-        self.sigmMed    = '%.2f'%abs(np.std(self.Data)/np.median(self.Data)*100)+'%'
+        if self.Data == []:
+            self.DieCount   = '0'
+            self.Median     = 'NaN'
+            self.Average    = 'NaN'
+            self.Max        = 'NaN'
+            self.Min        = 'NaN'
+            self.Standard   = 'NaN'
+            self._3sigma    = 'NaN'
+            self.sigmMed    = 'NaN'
+        else:
+            cal = Cal()
+            self.DieCount   = str(len(self.Data))
+            self.Median     = self.format(cal.median(self.Data))
+            self.Average    = self.format(cal.mean(self.Data))
+            self.Max        = self.format(max(self.Data))
+            self.Min        = self.format(min(self.Data))
+            self.Standard   = self.format(cal.standard(self.Data))
+            self._3sigma    = self.format(cal._3sigma(self.Data))
+            try:
+                self.sigmMed    = '%.2f'%abs(cal.standard(self.Data)/cal.median(self.Data)*100)+'%'
+            except:
+                # set sigmMed to 'NaN' as cal.median = 0
+                self.sigmMed = 'NaN'
+                
+    def format(self,value):
+        if abs(value) > 1e6 or abs(value) < 1e-4:
+            return '%.3e'%value
+        else:
+            return str(round(value,6))

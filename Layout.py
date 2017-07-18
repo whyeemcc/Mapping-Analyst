@@ -162,11 +162,14 @@ class Layout:
         '''     
         
         # define layouts in RDFrame 
-        self.specFrame = QtWidgets.QHBoxLayout()           
+        self.specFrame = QtWidgets.QHBoxLayout()   
+        self.FlagFrame = QtWidgets.QHBoxLayout()        
         self.DelFrame = QtWidgets.QHBoxLayout()
         # load layouts in RDFrame    
         self.RDFrame.addStretch()
         self.RDFrame.addLayout(self.specFrame)
+        self.RDFrame.addStretch()
+        self.RDFrame.addLayout(self.FlagFrame)
         self.RDFrame.addStretch()
         self.RDFrame.addLayout(self.DelFrame)
         self.RDFrame.addStretch()    
@@ -174,8 +177,11 @@ class Layout:
                  ------------------
                 |  --------------  | 
                 | |   specFrame  | |
-        RDFrame |  --------------  |              ^
-                |  --------------  |              |
+        RDFrame |  --------------  | 
+                |  --------------  |             ^
+                | |   FlagFrame  | |             |  
+                |  --------------  |
+                |  --------------  |              
                 | |   DelFrame   | | 
                 |  --------------  | 
                  ------------------

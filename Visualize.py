@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import numpy as np
+from Calculate import Cal
         
 class DataVisualize:
     '''
@@ -13,14 +13,18 @@ class DataVisualize:
         fig.subplots_adjust(left=0.12, right=0.98, top=0.93, bottom=0.18)   
         self.visualize()
 
-    def visualize(self):     
-        self.ax.axhline(np.median(self.data), color='g', label="Median")
-        self.ax.plot(self.data,'ro')        
-        self.style()
+    def visualize(self):   
+        if self.data == []:
+            self.ax.plot([])
+        else:
+            cal = Cal()
+            self.ax.axhline(cal.median(self.data), color='g', label="Median")
+            self.ax.plot(self.data,'ro')        
+            self.style()
         
     def style(self):
         self.ax.legend(frameon=False,loc ='upper right')
-        self.ax.set_xticks(np.arange(len(self.coordinate)))
+        self.ax.set_xticks(range(len(self.coordinate)))
         self.ax.set_xticklabels(self.coordinate,rotation=30)
         
         
@@ -63,7 +67,8 @@ class DieVisualize:
     def dieColor(self,die):
         index = self.coordinate.index(die)
         data = self.data[index]
-        median = np.median(self.data)
+        cal = Cal()
+        median = cal.median(self.data)
         if median == 0 : base = 0.001
         else : base = median
         percent = abs( (data-median)/base )
