@@ -97,8 +97,14 @@ class Statistic:
             testkey name locate in 3rd positon
             such as : 'C1_A1_MC25A_NMCAP_MIS_d67_d61'
             '''
-            self.Testkey = re.match('[A-Z]+[0-9]+[A-Z]',comp[2]).group()
-            self.Etest = comp[0]+'_'+comp[1]
+            m = re.match('[A-Z]+[0-9]+[A-Z]',comp[2])
+            if m is not None:
+                self.Testkey = m.group()
+                self.Etest = comp[0]+'_'+comp[1]
+            else:
+                # other conditions
+                self.Testkey = comp[1]
+                self.Etest = comp[0]
         lenF = len(self.Etest + self.Testkey)+2
         lenB = len(self.W + self.L)+2
         self.Device = item[ lenF : len(item)-lenB ]
