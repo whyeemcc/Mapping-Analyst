@@ -32,5 +32,5 @@ WaferID：
 
 如有Bug，请联系：
 Author: Grothendieck_Yu
-Mail: whyeemcc@gmail.com
+Mail: Grothendieck_Yu@smics.com
 '''

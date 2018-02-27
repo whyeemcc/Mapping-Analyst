@@ -77,37 +77,41 @@ class Statistic:
         self.numerical() 
     
     def itemSplit(self):
-        item = self.line.split(',')[0]
-        comp = item.split('_')
+        try:
+            item = self.line.split(',')[0]
+            comp = item.split('_')
 
-        self.L = comp[-1].replace('d','.')
-        self.W = comp[-2].replace('d','.')
+            self.L = comp[-1].replace('d','.')
+            self.W = comp[-2].replace('d','.')
 
-        # check the 2nd item if it is testkey format
-        m = re.match('[A-Z]+[0-9]+[A-Z]',comp[1]) 
-        if m is not None:
-            '''
-            testkey name locate in 2nd positon
-            such as : 'RKV_MR056D_R4TNWAA_1d8_2'
-            '''
-            self.Testkey = m.group()
-            self.Etest = comp[0]
-        else:
-            '''
-            testkey name locate in 3rd positon
-            such as : 'C1_A1_MC25A_NMCAP_MIS_d67_d61'
-            '''
-            m = re.match('[A-Z]+[0-9]+[A-Z]',comp[2])
+            # check the 2nd item if it is testkey format
+            m = re.match('[A-Z]+[0-9]+[A-Z]',comp[1]) 
             if m is not None:
+                '''
+                testkey name locate in 2nd positon
+                such as : 'RKV_MR056D_R4TNWAA_1d8_2'
+                '''
                 self.Testkey = m.group()
-                self.Etest = comp[0]+'_'+comp[1]
-            else:
-                # other conditions
-                self.Testkey = comp[1]
                 self.Etest = comp[0]
-        lenF = len(self.Etest + self.Testkey)+2
-        lenB = len(self.W + self.L)+2
-        self.Device = item[ lenF : len(item)-lenB ]
+            else:
+                '''
+                testkey name locate in 3rd positon
+                such as : 'C1_A1_MC25A_NMCAP_MIS_d67_d61'
+                '''
+                m = re.match('[A-Z]+[0-9]+[A-Z]',comp[2])
+                if m is not None:
+                    self.Testkey = m.group()
+                    self.Etest = comp[0]+'_'+comp[1]
+                else:
+                    # other conditions
+                    self.Testkey = comp[1]
+                    self.Etest = comp[0]
+            lenF = len(self.Etest + self.Testkey)+2
+            lenB = len(self.W + self.L)+2
+            self.Device = item[ lenF : len(item)-lenB ]
+        except:
+            self.L,self.W,self.Etest,self.Testkey,self.Device = 'unknown','unknown','unknown','unknown','unknown'
+            
         self.Unit = self.line.split(',')[3]
         
     def numerical(self):

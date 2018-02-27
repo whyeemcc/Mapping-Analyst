@@ -1,48 +1,67 @@
+from PyQt5 import QtCore
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from Calculate import Cal
         
-class DataVisualize:
+class DataVisualize(QtCore.QThread):
+    # return a signal as self.run is over
+    finishSignal  = QtCore.pyqtSignal()
     '''
     measured data dot and median value line
     '''
-    def __init__(self,fig,data,die):
+    def __init__(self,fig,data,die,parent=None):
+        super(DataVisualize, self).__init__(parent)
+        fig.clear()
+        fig.subplots_adjust(left=0.12, right=0.98, top=0.93, bottom=0.18)   
+        self.ax1 = fig.add_subplot(111)
+        
         self.data = data
         self.coordinate = die
-        self.ax = fig.add_subplot(111)
-        fig.subplots_adjust(left=0.12, right=0.98, top=0.93, bottom=0.18)   
-        self.visualize()
+        
+    def __del__(self):
+        self.exiting = True
+        self.wait()
 
-    def visualize(self):   
+    def run(self):   
         if self.data == []:
-            self.ax.plot([])
+            self.ax1.plot([])
         else:
             cal = Cal()
-            self.ax.axhline(cal.median(self.data), color='g', label="Median")
-            self.ax.plot(self.data,'ro')        
+            self.ax1.axhline(cal.median(self.data), color='g', label="Median")
+            self.ax1.plot(self.data,'ro')        
             self.style()
+        self.finishSignal.emit()
         
     def style(self):
-        self.ax.legend(frameon=False,loc ='upper right')
-        self.ax.set_xticks(range(len(self.coordinate)))
-        self.ax.set_xticklabels(self.coordinate,rotation=30)
+        try:
+            self.ax1.legend(frameon=False,loc ='upper right')
+            self.ax1.set_xticks(range(len(self.coordinate)))
+            self.ax1.set_xticklabels(self.coordinate,rotation=30)
+        except:
+            pass
         
-        
-class DieVisualize:
+class DieVisualize(QtCore.QThread):
+    # return a signal as self.run is over
+    finishSignal  = QtCore.pyqtSignal()
     '''
     draw a circle signify a wafer
     square means independent die
     die's color means the difference between data and median value
     '''
-    def __init__(self,fig,data,die,radius):
+    def __init__(self,fig,data,die,radius,parent=None):
+        super(DieVisualize, self).__init__(parent)
+        fig.clear()
+        self.ax2 = fig.add_subplot(111,aspect='equal')
+
         self.data = data
         self.coordinate = die
         self.radius = radius
-        self.ax = fig.add_subplot(111,aspect='equal')
-        self.ax.clear()
-        self.visualize()
         
-    def visualize(self):
+    def __del__(self):
+        self.exiting = True
+        self.wait()
+        
+    def run(self):
         maxDie = self.radius
         # draw a circle
         self.addCircle(0,0,maxDie,'none','black')
@@ -55,15 +74,19 @@ class DieVisualize:
                 if (abs(x)+0.5)**2 + (abs(y)+0.5)**2 <= maxDie**2:
                     self.addRectangle(x,y,'grey','white')        
         self.style()
+        self.finishSignal.emit()
         
     def style(self):
         maxDie = self.radius
-        self.ax.set_xticks(range(-maxDie,maxDie+1))
-        self.ax.set_yticks(range(-maxDie,maxDie+1))
-        self.ax.set_xlim(-maxDie,maxDie)
-        self.ax.set_ylim(-maxDie,maxDie)
-        self.ax.invert_yaxis()
-    
+        try:
+            self.ax2.set_xticks(range(-maxDie,maxDie+1))
+            self.ax2.set_yticks(range(-maxDie,maxDie+1))
+            self.ax2.set_xlim(-maxDie,maxDie)
+            self.ax2.set_ylim(-maxDie,maxDie)
+        except:
+            pass
+        self.ax2.invert_yaxis() 
+        
     def dieColor(self,die):
         index = self.coordinate.index(die)
         data = self.data[index]
@@ -78,7 +101,7 @@ class DieVisualize:
         else: return 'red'
     
     def addCircle(self,x,y,radius,faceColor,edgeColor):
-        self.ax.add_patch(patches.Circle(
+        self.ax2.add_patch(patches.Circle(
                             (x,y),          # center
                             radius,         # radius
                             facecolor = faceColor,
@@ -86,7 +109,7 @@ class DieVisualize:
                         )
                 
     def addRectangle(self,x,y,faceColor,edgeColor):
-        self.ax.add_patch(patches.Rectangle(
+        self.ax2.add_patch(patches.Rectangle(
                             (x-0.5,y-0.5),  # left,bottom
                             1,              # width
                             1,              # height

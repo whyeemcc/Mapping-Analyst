@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 
 class Layout:
-    def __init__(self,Item_List,toolbar,canvas1,canvas2): 
+    def __init__(self): 
         self.wid = QtWidgets.QWidget()
         # self.setCentralWidget(wid)
         self.mainFrame = QtWidgets.QVBoxLayout()
@@ -66,10 +66,11 @@ class Layout:
         # define layouts in leftFrame
         self.idFrame = QtWidgets.QHBoxLayout()
         self.searchFrame = QtWidgets.QHBoxLayout()   
+        self.listFrame = QtWidgets.QVBoxLayout() 
         # load layouts in leftFrame
         self.leftFrame.addLayout(self.idFrame)   
         self.leftFrame.addLayout(self.searchFrame)   
-        self.leftFrame.addWidget(Item_List)
+        self.leftFrame.addLayout(self.listFrame)
         '''
                  ------------------
                 |  --------------  | 
@@ -82,8 +83,8 @@ class Layout:
       leftFrame | |              | |              |
                 | |              | |              
                 | |              | |              
-                | |  Item_List   | |
-                | | (QListWidget)| |
+                | |  listFrame   | |
+                | |              | |
                 | |              | |
                 | |              | |
                 | |              | |
@@ -113,22 +114,24 @@ class Layout:
         
         # define layouts in rightFrame 
         self.DieFrame = QtWidgets.QHBoxLayout()
+        self.barFrame = QtWidgets.QVBoxLayout()
+        self.canvasFrame1 = QtWidgets.QVBoxLayout()
         # layout load widgets              
-        self.rightFrame.addWidget(toolbar)
-        self.rightFrame.addWidget(canvas1)
+        self.rightFrame.addLayout(self.barFrame)
+        self.rightFrame.addLayout(self.canvasFrame1)
         self.rightFrame.addLayout(self.DieFrame)
         self.rightFrame.addStretch()
-        self.rightFrame.setStretchFactor(toolbar,1)
-        self.rightFrame.setStretchFactor(canvas1,3)
+        self.rightFrame.setStretchFactor(self.barFrame,1)
+        self.rightFrame.setStretchFactor(self.canvasFrame1,3)
         self.rightFrame.setStretchFactor(self.DieFrame,3)
         '''
                  ----------------------- 
                 |  -------------------  |
-                | |    self.toolbar   | |
+                | |     barFrame      | |
                 |  -------------------  | 
                 |  -------------------  |
                 | |                   | | 
-                | |    self.canvas1   | |        
+                | |    canvasFrame1   | |        
                 | |                   | |
                 | |                   | |              ^
                 |  -------------------  |              |
@@ -146,7 +149,8 @@ class Layout:
           
         
         self.RDFrame = QtWidgets.QVBoxLayout()
-        self.DieFrame.addWidget(canvas2)
+        self.canvasFrame2 = QtWidgets.QVBoxLayout()
+        self.DieFrame.addLayout(self.canvasFrame2)
         self.DieFrame.addLayout(self.RDFrame)
         self.DieFrame.addStretch()  
         '''
@@ -154,7 +158,7 @@ class Layout:
                 |  --------------   ---------  |
                 | |              | |         | | 
                 | |              | |         | | 
-       DieFrame | | self.canvas2 | | RDFrame | |         <-
+       DieFrame | | canvasFrame2 | | RDFrame | |         <-
                 | |              | |         | | 
                 | |              | |         | | 
                 |  --------------   ---------  |
