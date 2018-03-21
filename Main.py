@@ -43,16 +43,17 @@ class Main(Interface):
         try:
             self.list = self.allList[self.Id_Select.currentIndex()][2]    
             self.Item_List.clear()  
-            key = self.Search_Line.text()
+            key = self.Search_Line.text().strip(' ').split(' ')
             '''
             filter: 
             if it is none in the searchline, show the all of item
             else show the item which contain the key words in searchline
             '''
-            if key == '':
+            if key == ['']:
                 listShow = self.list
             else:
-                listShow = [x for x in self.list if key in x]       
+                listShow = self.list
+                for x in key : listShow = [y for y in listShow if x in y]       
             # reload the filtered items in the QListWidget
             for item in listShow:
                 self.Item_List.addItem(item)
